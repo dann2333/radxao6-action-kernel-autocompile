@@ -30,7 +30,7 @@ jobs:
             if [ -d linux/rk3588 ]; then
               profile_source="linux/rk3588"
             else
-              echo "Missing RK3588 profile at $profile_source" >&2
+              echo "Missing RK3588 profile at linux/.rk3588 and linux/rk3588" >&2
               exit 1
             fi
           fi
