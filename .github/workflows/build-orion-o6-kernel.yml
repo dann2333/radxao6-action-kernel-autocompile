@@ -1,0 +1,35 @@
+name: Build Orion O6 Kernel Debs
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build kernel debs
+        uses: radxa-repo/bsp@main
+        with:
+          target: linux
+          edition: orion-o6
+          artifacts: true
+          release-id: ${{ github.event.release.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Stage output
+        if: always()
+        run: |
+          mkdir -p out/linux
+          if [ -d .output ]; then
+            cp -a .output/. out/linux/
+          fi
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: linux_orion-o6_output
+          path: out/linux
