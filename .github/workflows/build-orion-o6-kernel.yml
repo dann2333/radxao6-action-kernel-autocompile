@@ -30,7 +30,7 @@ jobs:
             if [ -d linux/rk3588 ]; then
               profile_source="linux/rk3588"
             else
-              echo "Missing RK3588 profile at linux/.rk3588 and linux/rk3588" >&2
+              echo "Error: rk3588 profile not found at linux/.rk3588 or linux/rk3588. Ensure the BSP repository checkout includes the required profile." >&2
               exit 1
             fi
           fi
@@ -40,10 +40,7 @@ jobs:
         run: |
           mkdir .output
           pushd .output
-          if ! ../bsp --long-version -r "$REVISION" linux orion-o6; then
-            echo "bsp build failed for orion-o6" >&2
-            exit 1
-          fi
+          ../bsp --long-version -r "$REVISION" linux orion-o6
           popd
       - name: Upload bsp artifacts
         uses: actions/upload-artifact@v5
