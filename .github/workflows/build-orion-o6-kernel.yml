@@ -40,7 +40,10 @@ jobs:
         run: |
           mkdir .output
           pushd .output
-          ../bsp --long-version -r "$REVISION" linux orion-o6
+          if ! ../bsp --long-version -r "$REVISION" linux orion-o6; then
+            echo "bsp build failed for orion-o6" >&2
+            exit 1
+          fi
           popd
       - name: Upload bsp artifacts
         uses: actions/upload-artifact@v5
@@ -48,7 +51,7 @@ jobs:
           name: linux_orion-o6_${{ env.REVISION }}
           path: .output
       - name: Upload release artifacts
-        if: github.event.release.id != ''
+        if: github.event.release.id
         uses: xresloader/upload-to-github-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -56,7 +59,7 @@ jobs:
           release_id: ${{ github.event.release.id }}
           file: .output/*
       - name: Rollback release
-        if: failure() && github.event.release.id != ''
+        if: failure() && github.event.release.id
         uses: author/action-rollback@stable
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
