@@ -11,6 +11,8 @@ permissions:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+    env:
+      REVISION: 1
     steps:
       - name: Checkout BSP sources
         uses: actions/checkout@v5
@@ -24,12 +26,13 @@ jobs:
       - name: Add Orion O6 profile
         run: |
           profile_source="linux/.rk3588"
-          if [ ! -d "$profile_source" ] && [ -d linux/rk3588 ]; then
-            profile_source="linux/rk3588"
-          fi
           if [ ! -d "$profile_source" ]; then
-            echo "Missing RK3588 profile at $profile_source" >&2
-            exit 1
+            if [ -d linux/rk3588 ]; then
+              profile_source="linux/rk3588"
+            else
+              echo "Missing RK3588 profile at $profile_source" >&2
+              exit 1
+            fi
           fi
           cp -a "$profile_source" linux/orion-o6
           sed -i 's/SUPPORTED_BOARDS=("rk3588")/SUPPORTED_BOARDS=("orion-o6")/' linux/orion-o6/fork.conf
@@ -37,12 +40,12 @@ jobs:
         run: |
           mkdir .output
           pushd .output
-          ../bsp --long-version -r 1 linux orion-o6
+          ../bsp --long-version -r "$REVISION" linux orion-o6
           popd
       - name: Upload bsp artifacts
         uses: actions/upload-artifact@v5
         with:
-          name: linux_orion-o6_1
+          name: linux_orion-o6_${{ env.REVISION }}
           path: .output
       - name: Upload release artifacts
         if: github.event.release.id != ''
