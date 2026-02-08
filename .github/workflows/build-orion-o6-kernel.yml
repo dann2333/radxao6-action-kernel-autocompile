@@ -1,0 +1,81 @@
+name: Build Orion O6 Kernel Debs
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Optional release tag for the GitHub Release
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          # Dependencies per linux-sky1 build instructions.
+          sudo apt-get install -y git devscripts lintian debhelper fakeroot build-essential bc bison flex libssl-dev libelf-dev dwarves rsync
+
+      - name: Clone linux-sky1
+        run: |
+          # Use the default linux-sky1 branch per build instructions.
+          git clone --recurse-submodules https://github.com/radxa-pkg/linux-sky1.git
+
+      - name: Build kernel debs
+        working-directory: linux-sky1
+        run: |
+          # devcontainer_setup is required by linux-sky1 build instructions.
+          make devcontainer_setup
+          make deb
+
+      - name: Capture version
+        working-directory: linux-sky1
+        run: |
+          VERSION=$(dpkg-parsechangelog -S Version)
+          if [ -z "${VERSION}" ]; then
+            echo "Failed to parse version from debian/changelog. Ensure the changelog file exists and contains valid version information." >&2
+            exit 1
+          fi
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+
+      - name: Collect deb artifacts
+        run: |
+          mkdir -p artifacts
+          ROOT_DIR="${PWD}"
+          SOURCE_DIR="${PWD}/linux-sky1"
+          # linux-sky1 deb builds usually write .deb files to the parent directory (repo root); fall back to in-tree outputs if the build does so.
+          if ls "${ROOT_DIR}"/*.deb >/dev/null 2>&1; then
+            echo "Collecting Debian packages from ${ROOT_DIR}."
+            cp -v "${ROOT_DIR}"/*.deb artifacts/
+          elif ls "${SOURCE_DIR}"/*.deb >/dev/null 2>&1; then
+            echo "Collecting Debian packages from ${SOURCE_DIR}."
+            cp -v "${SOURCE_DIR}"/*.deb artifacts/
+          else
+            echo "No .deb artifacts found in either ${ROOT_DIR} or ${SOURCE_DIR}. Verify the build completed successfully." >&2
+            exit 1
+          fi
+
+      - name: Set release tag
+        env:
+          RELEASE_TAG_INPUT: ${{ inputs.release_tag }}
+        run: |
+          if [ -n "${RELEASE_TAG_INPUT}" ]; then
+            echo "RELEASE_TAG=${RELEASE_TAG_INPUT}" >> "$GITHUB_ENV"
+          else
+            echo "RELEASE_TAG=orion-o6-kernel-${VERSION}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_TAG }}
+          files: artifacts/*.deb
