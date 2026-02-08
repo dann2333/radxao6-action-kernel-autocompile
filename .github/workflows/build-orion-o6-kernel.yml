@@ -12,14 +12,45 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - name: Build kernel debs
-        uses: radxa-repo/bsp@main
+      - name: Checkout BSP sources
+        uses: actions/checkout@v5
         with:
-          target: linux
-          edition: orion-o6
-          artifacts: true
-          release-id: ${{ github.event.release.id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: radxa-repo/bsp
+          submodules: true
+      - name: Install dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y qemu-user-static binfmt-support
+      - name: Add Orion O6 profile
+        run: |
+          cp -a linux/.rk3588 linux/orion-o6
+          sed -i 's/SUPPORTED_BOARDS=("rk3588")/SUPPORTED_BOARDS=("orion-o6")/' linux/orion-o6/fork.conf
+      - name: Build kernel debs
+        run: |
+          mkdir .output
+          pushd .output
+          ../bsp --long-version -r 1 linux orion-o6
+          popd
+      - name: Upload bsp artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: linux_orion-o6_1
+          path: .output
+      - name: Upload release artifacts
+        if: github.event.release.id != ''
+        uses: xresloader/upload-to-github-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ github.event.release.id }}
+          file: .output/*
+      - name: Rollback release
+        if: failure() && github.event.release.id != ''
+        uses: author/action-rollback@stable
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ github.event.release.id }}
       - name: Stage output
         if: always()
         run: |
