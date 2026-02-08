@@ -25,14 +25,13 @@ jobs:
           sudo apt-get install --no-install-recommends -y qemu-user-static binfmt-support
       - name: Add Orion O6 profile
         run: |
-          profile_source="linux/.rk3588"
-          if [ ! -d "$profile_source" ]; then
-            if [ -d linux/rk3588 ]; then
-              profile_source="linux/rk3588"
-            else
-              echo "Error: rk3588 profile not found at linux/.rk3588 or linux/rk3588. Ensure the BSP repository checkout includes the required profile." >&2
-              exit 1
-            fi
+          if [ -d linux/.rk3588 ]; then
+            profile_source="linux/.rk3588"
+          elif [ -d linux/rk3588 ]; then
+            profile_source="linux/rk3588"
+          else
+            echo "Error: rk3588 profile not found at linux/.rk3588 or linux/rk3588. Ensure the BSP repository checkout includes the required profile." >&2
+            exit 1
           fi
           cp -a "$profile_source" linux/orion-o6
           sed -i 's/SUPPORTED_BOARDS=("rk3588")/SUPPORTED_BOARDS=("orion-o6")/' linux/orion-o6/fork.conf
