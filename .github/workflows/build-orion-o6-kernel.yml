@@ -27,7 +27,7 @@ jobs:
       - name: Clone linux-sky1
         run: |
           # Use the default linux-sky1 branch per build instructions.
-          git clone --recurse-submodules https://github.com/radxa-pkg/linux-sky1.git
+          git clone --recurse-submodules https://github.com/dann2333/linux-sky1.git
 
       - name: Build kernel debs
         working-directory: linux-sky1
