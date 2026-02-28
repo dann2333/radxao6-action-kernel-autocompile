@@ -70,7 +70,8 @@ jobs:
           if [ -n "${RELEASE_TAG_INPUT}" ]; then
             echo "RELEASE_TAG=${RELEASE_TAG_INPUT}" >> "$GITHUB_ENV"
           else
-            echo "RELEASE_TAG=orion-o6-kernel-${VERSION}" >> "$GITHUB_ENV"
+            BUILD_DATE_UTC="$(date -u +%Y%m%d-%H%M%S)"
+            echo "RELEASE_TAG=orion-o6-kernel-${VERSION}-${BUILD_DATE_UTC}" >> "$GITHUB_ENV"
           fi
 
       - name: Publish GitHub Release
