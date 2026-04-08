@@ -83,7 +83,7 @@ jobs:
           ARCHIVE_NAME="${RELEASE_TAG}.zip"
           (
             cd artifacts
-            zip "${ARCHIVE_NAME}" ./*.deb
+            zip "${ARCHIVE_NAME}" *.deb
           )
           echo "ARCHIVE_PATH=artifacts/${ARCHIVE_NAME}" >> "$GITHUB_ENV"
 
