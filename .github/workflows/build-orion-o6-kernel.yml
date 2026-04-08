@@ -77,13 +77,13 @@ jobs:
       - name: Package deb artifacts
         run: |
           if ! ls artifacts/*.deb >/dev/null 2>&1; then
-            echo "No .deb files found in artifacts/. Cannot create release archive." >&2
+            echo "No .deb files found in artifacts/. The kernel build may not have produced any Debian packages." >&2
             exit 1
           fi
           ARCHIVE_NAME="${RELEASE_TAG}.zip"
           (
             cd artifacts
-            zip -j "${ARCHIVE_NAME}" ./*.deb
+            zip "${ARCHIVE_NAME}" ./*.deb
           )
           echo "ARCHIVE_PATH=artifacts/${ARCHIVE_NAME}" >> "$GITHUB_ENV"
 
