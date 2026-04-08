@@ -76,7 +76,11 @@ jobs:
 
       - name: Package deb artifacts
         run: |
-          ARCHIVE_NAME="${RELEASE_TAG}-debs.zip"
+          if ! ls artifacts/*.deb >/dev/null 2>&1; then
+            echo "No .deb files found in artifacts/. Cannot create release archive." >&2
+            exit 1
+          fi
+          ARCHIVE_NAME="${RELEASE_TAG}.zip"
           (
             cd artifacts
             zip -j "${ARCHIVE_NAME}" ./*.deb
