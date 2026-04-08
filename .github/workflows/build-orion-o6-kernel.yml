@@ -22,7 +22,7 @@ jobs:
         run: |
           sudo apt-get update
           # Dependencies per linux-sky1 build instructions.
-          sudo apt-get install -y git devscripts lintian debhelper fakeroot build-essential bc bison flex libssl-dev libelf-dev dwarves rsync
+          sudo apt-get install -y git devscripts lintian debhelper fakeroot build-essential bc bison flex libssl-dev libelf-dev dwarves rsync zip
 
       - name: Clone linux-sky1
         run: |
@@ -74,9 +74,18 @@ jobs:
             echo "RELEASE_TAG=orion-o6-kernel-${VERSION}-${BUILD_DATE_UTC}" >> "$GITHUB_ENV"
           fi
 
+      - name: Package deb artifacts
+        run: |
+          ARCHIVE_NAME="${RELEASE_TAG}-debs.zip"
+          (
+            cd artifacts
+            zip -j "${ARCHIVE_NAME}" ./*.deb
+          )
+          echo "ARCHIVE_PATH=artifacts/${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: ${{ env.RELEASE_TAG }}
-          files: artifacts/*.deb
+          files: ${{ env.ARCHIVE_PATH }}
